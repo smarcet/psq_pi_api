@@ -1,0 +1,3 @@
+API_HOST = "http://127.0.0.1:8000"
+STREAM_HOST = "http://192.168.2.124:8081"
+ALLOWED_HOSTS = ['*']

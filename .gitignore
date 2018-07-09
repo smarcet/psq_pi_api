@@ -1,0 +1,20 @@
+*.sqlite3
+.env
+.idea
+.installed.cfg
+bin
+develop-eggs
+dist
+downloads
+eggs
+parts
+src/*.egg-info
+lib
+lib64
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+.DS_Store
+*.mo
+media/
+storage/
