@@ -11,6 +11,7 @@ import socket
 import subprocess
 import time
 import sys
+from datetime import datetime, timezone
 
 
 class DeviceOpenRegistrationView(GenericAPIView):
@@ -65,11 +66,11 @@ class DeviceStartRecordingView(GenericAPIView):
             job.video_file = file_name
             job.is_recording_done = False
             job.is_processed = False
+            job.device_mac_address = get_mac_address()
             job.save()
 
             return Response({
                 "pid": proc.pid,
-                "file_name": file_name,
                 "id": job.id
             }, status=status.HTTP_201_CREATED)
 
@@ -81,6 +82,7 @@ class DeviceStartRecordingView(GenericAPIView):
 class DeviceStopRecordingView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.Serializer
+    WAIT_TIME = 5
 
     @staticmethod
     def put(request, *args, **kwargs):
@@ -89,10 +91,13 @@ class DeviceStopRecordingView(GenericAPIView):
             job = ExamCreationJob.objects.get(pk=job_id)
             if job is None:
                 return Response({}, status.HTTP_404_NOT_FOUND)
-
             os.system("kill {0}".format(job.pid))
             job.is_recording_done = True
+            now = datetime.now(timezone.utc)
+            delta = now - job.created
+            job.exam_duration = delta.seconds - DeviceStopRecordingView.WAIT_TIME
             job.save()
+
             return Response({}, status=status.HTTP_204_NO_CONTENT)
         except:
             print("Unexpected error:", sys.exc_info()[0])

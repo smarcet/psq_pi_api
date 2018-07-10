@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'psq_pi.sqlite3'),
     }
 }
 
@@ -129,6 +129,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# http://django-cron.readthedocs.io/en/latest/configuration.html
+CRON_CLASSES = [
+    "api.cron_jobs.ProcessExamCreationJobsCronJob",
+]
 
 # Import local settings
 try:
