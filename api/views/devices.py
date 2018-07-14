@@ -55,7 +55,7 @@ class DeviceStartRecordingView(GenericAPIView):
             exercise_id = str(kwargs['exercise_id'])
             stream_param = '-s{}'.format(settings.STREAM_HOST)
             timestamp = int(time.time())
-            file_name = "{}_{}_{}.ogg".format(user_id, exercise_id, timestamp)
+            file_name = "{}_{}_{}.mkv".format(user_id, exercise_id, timestamp)
             output_file = '-o{}/{}'.format(settings.VIDEOS_ROOT, file_name)
             python_interpreter = '{}/.env/bin/python'.format(settings.BASE_DIR)
             capture_script = '{}/api/utils/capture_stream.py'.format(settings.BASE_DIR)
