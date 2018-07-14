@@ -1,4 +1,4 @@
-API_HOST = "http://api.psq.com"
+API_HOST = "https://api.psq.com"
 STREAM_HOST = "http://192.168.2.124:8081"
 ALLOWED_HOSTS = ['*']
 
