@@ -35,7 +35,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
             session = requests.Session()
             session.verify = False
             response = session.post(endpoint, data=data)
-            logger.info("response from api http code {code}", code=response.status_code)
+            logger.info("response from api http code {code}".format(code=response.status_code))
             return Response(response.json(), status=response.status_code)
         except:
             print("Unexpected error:", sys.exc_info()[0])
