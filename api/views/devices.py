@@ -21,16 +21,22 @@ class DeviceOpenRegistrationView(GenericAPIView):
 
     @staticmethod
     def post(request):
-        # current device data
-        data = {
-            'mac_address': get_mac_address(),
-            'last_know_ip': socket.gethostbyname(socket.gethostname())
-        }
+        try:
+            # current device data
+            data = {
+                'mac_address': get_mac_address(),
+                'last_know_ip': socket.gethostbyname(socket.gethostname())
+            }
 
-        endpoint = settings.API_HOST + "/devices/current/registration"
-        response = requests.post(endpoint, data=data)
+            endpoint = settings.API_HOST + "/devices/current/registration"
+            session = requests.Session()
+            session.verify = False
+            response = session.post(endpoint, data=data)
 
-        return Response(response.json(), status=response.status_code)
+            return Response(response.json(), status=response.status_code)
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            return Response(sys.exc_info()[0], status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class DeviceStartRecordingView(GenericAPIView):
@@ -45,9 +51,9 @@ class DeviceStartRecordingView(GenericAPIView):
             exercise_id = str(kwargs['exercise_id'])
             stream_param = '-s{}'.format(settings.STREAM_HOST)
             timestamp = int(time.time())
-            file_name = "{}_{}_{}.mp4".format(user_id, exercise_id, timestamp)
+            file_name = "{}_{}_{}.ogg".format(user_id, exercise_id, timestamp)
             output_file = '-o{}/{}'.format(settings.VIDEOS_ROOT, file_name)
-            python_interpreter = '{}/.env/bin/python3.6'.format(settings.BASE_DIR)
+            python_interpreter = '{}/.env/bin/python'.format(settings.BASE_DIR)
             capture_script = '{}/api/utils/capture_stream.py'.format(settings.BASE_DIR)
 
             cmd = [python_interpreter,
@@ -57,7 +63,6 @@ class DeviceStartRecordingView(GenericAPIView):
 
             proc = subprocess.Popen(cmd)
             time.sleep(3)
-
             job = ExamCreationJob()
             job.pid = proc.pid
             job.user_id = user_id
