@@ -21,6 +21,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
 
     @staticmethod
     def post(request):
+        logger = logging.getLogger(__name__)
         try:
             # current device data
             data = {
@@ -36,6 +37,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
             return Response(response.json(), status=response.status_code)
         except:
             print("Unexpected error:", sys.exc_info()[0])
+            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
             return Response(sys.exc_info()[0], status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -89,6 +91,7 @@ class DeviceStartRecordingView(GenericAPIView):
             }, status=status.HTTP_201_CREATED)
 
         except:
+            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
             print("Unexpected error:", sys.exc_info()[0])
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -115,4 +118,5 @@ class DeviceStopRecordingView(GenericAPIView):
             return Response({}, status=status.HTTP_204_NO_CONTENT)
         except:
             print("Unexpected error:", sys.exc_info()[0])
+            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

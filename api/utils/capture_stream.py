@@ -21,7 +21,8 @@ class Daemon:
             cap = cv2.VideoCapture(self.stream_url)
             #fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-            fourcc = cv2.VideoWriter_fourcc(*'VP31') # ogg
+            #fourcc = cv2.VideoWriter_fourcc(*'VP31') # ogg
+            fourcc = cv2.VideoWriter_fourcc(*'theo') # ogg
             out = cv2.VideoWriter(self.output_file, fourcc, 20.0, (1280, 720))
             if not out.isOpened():
                 raise Exception
