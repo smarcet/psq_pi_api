@@ -14,6 +14,7 @@ import sys
 from datetime import datetime, timezone
 import logging
 
+
 class DeviceOpenRegistrationView(GenericAPIView):
     # open registration
     permission_classes = (AllowAny,)
@@ -22,6 +23,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
     @staticmethod
     def post(request):
         logger = logging.getLogger(__name__)
+
         try:
             # current device data
             data = {
@@ -33,7 +35,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
             session = requests.Session()
             session.verify = False
             response = session.post(endpoint, data=data)
-
+            logger.info("response from api http code {code}", code=response.status_code)
             return Response(response.json(), status=response.status_code)
         except:
             print("Unexpected error:", sys.exc_info()[0])
@@ -47,8 +49,10 @@ class DeviceStartRecordingView(GenericAPIView):
 
     @staticmethod
     def post(request, *args, **kwargs):
+        logger = logging.getLogger(__name__)
+
         try:
-            logger = logging.getLogger(__name__)
+
 
             device_id = kwargs['device_id']
             user_id = kwargs['user_id']
@@ -65,7 +69,7 @@ class DeviceStartRecordingView(GenericAPIView):
                    stream_param,
                    output_file]
 
-            logger.error('command {python_interpreter} {capture_script} {stream_param} {output_file}'.format(
+            logger.info('command {python_interpreter} {capture_script} {stream_param} {output_file}'.format(
                 python_interpreter=python_interpreter,
                 capture_script=capture_script,
                 stream_param=stream_param,
