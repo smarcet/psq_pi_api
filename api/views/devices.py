@@ -12,7 +12,7 @@ import subprocess
 import time
 import sys
 from datetime import datetime, timezone
-
+import logging
 
 class DeviceOpenRegistrationView(GenericAPIView):
     # open registration
@@ -46,6 +46,8 @@ class DeviceStartRecordingView(GenericAPIView):
     @staticmethod
     def post(request, *args, **kwargs):
         try:
+            logger = logging.getLogger(__name__)
+
             device_id = kwargs['device_id']
             user_id = kwargs['user_id']
             exercise_id = str(kwargs['exercise_id'])
@@ -60,6 +62,13 @@ class DeviceStartRecordingView(GenericAPIView):
                    capture_script,
                    stream_param,
                    output_file]
+
+            logger.error('command {python_interpreter} {capture_script} {stream_param} {output_file}'.format(
+                python_interpreter=python_interpreter,
+                capture_script=capture_script,
+                stream_param=stream_param,
+                output_file=output_file
+            ))
 
             proc = subprocess.Popen(cmd)
             time.sleep(3)
