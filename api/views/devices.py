@@ -103,7 +103,9 @@ class DeviceStopRecordingView(GenericAPIView):
 
     @staticmethod
     def put(request, *args, **kwargs):
+        logger = logging.getLogger(__name__)
         try:
+
             job_id = kwargs['job_id']
             job = ExamCreationJob.objects.get(pk=job_id)
             if job is None:
