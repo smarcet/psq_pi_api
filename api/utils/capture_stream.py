@@ -25,8 +25,7 @@ class Daemon:
             logger.info("get fps {fps} from source".format(fps=fps))
             size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                     int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-            fps = 20.0
-            size = (1280, 720)
+            fps = 5.0
             four_cc = cv2.VideoWriter_fourcc(*'MJPG')
 
             out = cv2.VideoWriter(self.output_file, four_cc, fps, size, True)

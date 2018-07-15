@@ -19,6 +19,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
     # open registration
     permission_classes = (AllowAny,)
     serializer_class = serializers.Serializer
+    queryset = ExamCreationJob.objects.all()
 
     @staticmethod
     def post(request):
@@ -46,6 +47,7 @@ class DeviceOpenRegistrationView(GenericAPIView):
 class DeviceStartRecordingView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.Serializer
+    queryset = ExamCreationJob.objects.all()
 
     @staticmethod
     def post(request, *args, **kwargs):
@@ -104,6 +106,7 @@ class DeviceStopRecordingView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.Serializer
     WAIT_TIME = 5
+    queryset = ExamCreationJob.objects.all()
 
     @staticmethod
     def put(request, *args, **kwargs):
@@ -122,6 +125,7 @@ class DeviceStopRecordingView(GenericAPIView):
             job.save()
 
             return Response({}, status=status.HTTP_204_NO_CONTENT)
+
         except:
             print("Unexpected error:", sys.exc_info()[0])
             logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))

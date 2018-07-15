@@ -8,6 +8,7 @@ from django.conf import settings
 import logging
 import os
 import subprocess
+import os.path
 
 
 class ProcessExamCreationJobsCronJob(CronJobBase):
@@ -22,17 +23,23 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
         endpoint = settings.API_HOST + "/exams/upload"
         for job in jobs:
             try:
-                input = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
-                output = os.path.splitext(input)[0] + '.ogg'
-                cmd = 'gst-launch-1.0 -e filesrc location={input} ! matroskademux ! jpegdec ! videoconvert ! ' \
-                      'theoraenc bitrate=2200 ! oggmux ! filesink location={output}'.format(
-                    input=input, output=output)
+
+                input_file = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
+
+                if not os.path.exists(input_file):
+                    print("file {input_file} does not exists, skipping it...".format(input_file=input_file))
+                    continue
+
+                output_file = os.path.splitext(input_file)[0] + '.ogg'
+                cmd = 'gst-launch-1.0 -e filesrc location={input_file} ! matroskademux ! jpegdec ! videoconvert ! ' \
+                      'theoraenc bitrate=1000000 ! oggmux ! filesink location={output_file}'.format(
+                    input_file=input_file, output_file=output_file)
                 print("about to run command {cmd}".format(cmd=cmd))
                 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
                 process.wait()
-                print("command returncode {return_code}".format(return_code=process.returncode))
+                print("command return code {return_code}".format(return_code=process.returncode))
 
-                files = {'file': open(output, 'rb')}
+                files = {'file': open(output_file, 'rb')}
 
                 values = {
                     'filename': job.video_file,

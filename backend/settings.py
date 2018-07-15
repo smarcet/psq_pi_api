@@ -134,6 +134,9 @@ CRON_CLASSES = [
     "api.cron_jobs.ProcessExamCreationJobsCronJob",
 ]
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 # Import local settings
 try:
     from .settings_local import *
