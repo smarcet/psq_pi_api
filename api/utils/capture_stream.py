@@ -2,7 +2,7 @@
 
 import sys, getopt, signal
 import cv2
-
+import logging
 
 class Daemon:
 
@@ -19,7 +19,12 @@ class Daemon:
     def run(self):
         try:
             cap = cv2.VideoCapture(self.stream_url)
+            logger = logging.getLogger(__name__)
             fps = cap.get(cv2.CAP_PROP_FPS)
+
+            logger.info("get fps {fps} from source".format(fps=fps))
+            fps = 10.0
+            logger.info("changing fps to {fps}".format(fps=fps))
             size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                     int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
             # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
