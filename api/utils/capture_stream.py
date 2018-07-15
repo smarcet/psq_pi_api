@@ -20,17 +20,16 @@ class Daemon:
         try:
             cap = cv2.VideoCapture(self.stream_url)
             logger = logging.getLogger(__name__)
+            print(__name__)
             fps = cap.get(cv2.CAP_PROP_FPS)
-
             logger.info("get fps {fps} from source".format(fps=fps))
-            fps = 10.0
-            logger.info("changing fps to {fps}".format(fps=fps))
             size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                     int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+
             # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            fourcc = cv2.VideoWriter_fourcc(*'theo') # ogg
+            #fourcc = cv2.VideoWriter_fourcc(*'theo') # ogg
             # fourcc = cv2.VideoWriter_fourcc(*'VP31') # ogg
-            # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+            fourcc = cv2.VideoWriter_fourcc(*'MJPG')
 
             out = cv2.VideoWriter(self.output_file, fourcc, fps, size, True)
             if not out.isOpened():

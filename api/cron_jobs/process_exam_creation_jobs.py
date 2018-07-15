@@ -6,6 +6,8 @@ from ..models import ExamCreationJob
 import requests
 from django.conf import settings
 import logging
+import os
+from os import subprocess
 
 
 class ProcessExamCreationJobsCronJob(CronJobBase):
@@ -20,7 +22,13 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
         endpoint = settings.API_HOST + "/exams/upload"
         for job in jobs:
             try:
-                files = {'file': open('{}/{}'.format(settings.VIDEOS_ROOT, job.video_file), 'rb')}
+                input = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
+                output = os.path.splitext(input)[0] + '.ogg'
+                cmd = 'gst-launch-1.0 -e filesrc location={input} ! matroskademux ! jpegdec ! videoconvert ! ' \
+                      'videoscale ! theoraenc ! oggmux ! filesink location={output}'.format(
+                    input=input, output=output)
+                subprocess.run(cmd)
+                files = {'file': open(output, 'rb')}
                 values = {
                     'filename': job.video_file,
                     'exercise': job.exercise_id,
@@ -45,5 +53,6 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
 
                 job.mark_as_processed()
                 job.save(force_update=True)
+
             except:
                 print("Unexpected error:", sys.exc_info()[0])
