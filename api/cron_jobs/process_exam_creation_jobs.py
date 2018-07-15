@@ -7,7 +7,7 @@ import requests
 from django.conf import settings
 import logging
 import os
-from os import subprocess
+import subprocess
 
 
 class ProcessExamCreationJobsCronJob(CronJobBase):
@@ -25,7 +25,7 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                 input = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
                 output = os.path.splitext(input)[0] + '.ogg'
                 cmd = 'gst-launch-1.0 -e filesrc location={input} ! matroskademux ! jpegdec ! videoconvert ! ' \
-                      'videoscale ! theoraenc ! oggmux ! filesink location={output}'.format(
+                      'theoraenc ! oggmux ! filesink location={output}'.format(
                     input=input, output=output)
                 subprocess.run(cmd)
                 files = {'file': open(output, 'rb')}
