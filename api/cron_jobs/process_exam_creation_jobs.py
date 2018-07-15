@@ -27,8 +27,13 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                 cmd = 'gst-launch-1.0 -e filesrc location={input} ! matroskademux ! jpegdec ! videoconvert ! ' \
                       'theoraenc bitrate=2200 ! oggmux ! filesink location={output}'.format(
                     input=input, output=output)
-                subprocess.run(cmd)
+                print("about to run command {cmd}".format(cmd=cmd))
+                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                process.wait()
+                print("command returncode {return_code}".format(return_code=process.returncode))
+
                 files = {'file': open(output, 'rb')}
+
                 values = {
                     'filename': job.video_file,
                     'exercise': job.exercise_id,
@@ -53,6 +58,6 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
 
                 job.mark_as_processed()
                 job.save(force_update=True)
-
+                print("job {id} processed!".format(id=job.id))
             except:
                 print("Unexpected error:", sys.exc_info()[0])
