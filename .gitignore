@@ -19,3 +19,7 @@ __pycache__/
 media/
 storage/
 .env
+*.avi
+*.mvk
+*.ogg
+*.log
