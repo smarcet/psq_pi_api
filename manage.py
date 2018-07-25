@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 import os
 import sys
+from dotenv import load_dotenv
 
 if __name__ == "__main__":
+    CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+    ENV_FILE = os.path.join(CURRENT_PATH, "backend", ".env")
+    load_dotenv(ENV_FILE)
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
     try:
         from django.core.management import execute_from_command_line

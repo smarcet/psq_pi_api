@@ -21,13 +21,12 @@ VIDEOS_ROOT = os.path.join(BASE_DIR, "storage")
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '+qc4guu*si)w7f6zjwc-upylu%5i*q5u#77g00xmk6rejd*)7b'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -127,8 +126,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
-STATIC_URL = '/static/'
-
 # http://django-cron.readthedocs.io/en/latest/configuration.html
 CRON_CLASSES = [
     "api.cron_jobs.ProcessExamCreationJobsCronJob",
@@ -137,8 +134,36 @@ CRON_CLASSES = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'propagate': True,
+        },
+        'api': {
+            'handlers': ['file'],
+            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'propagate': True,
+        },
+    },
+}
+
+API_HOST = os.getenv("API_HOST")
+STREAM_HOST = os.getenv("STREAM_HOST")
+
 # Import local settings
 try:
     from .settings_local import *
 except ImportError:
     print("Notice: Didn't import settings_local.")
+
