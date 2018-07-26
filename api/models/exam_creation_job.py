@@ -4,7 +4,8 @@ from macaddress.fields import MACAddressField
 
 
 class ExamCreationJob(TimeStampedModel):
-    pid = models.PositiveIntegerField(null=False)
+    pid_capture = models.PositiveIntegerField(null=False)
+    pid_stream = models.PositiveIntegerField(null=False)
     user_id = models.PositiveIntegerField(null=False)
     exercise_id = models.PositiveIntegerField(null=False)
     device_id = models.PositiveIntegerField(null=False)

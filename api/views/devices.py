@@ -5,13 +5,13 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 import requests
 from rest_framework.response import Response
+from api.utils import get_video_len
 from ..models import ExamCreationJob
 from ..utils import get_mac_address
 import socket
 import subprocess
 import time
 import sys
-from datetime import datetime, timezone
 import logging
 
 
@@ -48,6 +48,7 @@ class DeviceStartRecordingView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.Serializer
     queryset = ExamCreationJob.objects.all()
+    SLEEP_INTERVAL = 3
 
     @staticmethod
     def post(request, *args, **kwargs):
@@ -55,21 +56,38 @@ class DeviceStartRecordingView(GenericAPIView):
 
         try:
 
-
             device_id = kwargs['device_id']
             user_id = kwargs['user_id']
             exercise_id = str(kwargs['exercise_id'])
-            stream_param = '-s{}'.format(settings.STREAM_HOST)
+            stream_key = str(request.GET.get("stream_key"))
+
+            stream_param = '-s {}'.format(settings.STREAM_HOST)
             timestamp = int(time.time())
             file_name = "{}_{}_{}.mkv".format(user_id, exercise_id, timestamp)
-            output_file = '-o{}/{}'.format(settings.VIDEOS_ROOT, file_name)
-            python_interpreter = '{}/.env/bin/python'.format(settings.BASE_DIR)
-            capture_script = '{}/api/utils/capture_stream.py'.format(settings.BASE_DIR)
+            output_file = '-o {}/{}'.format(settings.VIDEOS_ROOT, file_name)
+            rtmp_url = '-o {}'.format(settings.RTMP_HOST)
+            user_id_param = '-u {}'.format(user_id)
+            exercise_id_param = '-e {}'.format(exercise_id)
+            stream_key_param = '-k {}'.format(stream_key)
+            type_param = '-t {}'.format(settings.DEVICE_TYPE)
 
-            cmd = [python_interpreter,
+            python_interpreter = '{}/.env/bin/python'.format(settings.BASE_DIR)
+            capture_script = '{}/api/utils/capture_gs.py'.format(settings.BASE_DIR)
+            streamer_script = '{}/api/utils/streamer_gs.py'.format(settings.BASE_DIR)
+
+            cmd1 = [python_interpreter,
                    capture_script,
                    stream_param,
                    output_file]
+
+            cmd2 = [python_interpreter,
+                    streamer_script,
+                    stream_param,
+                    rtmp_url,
+                    user_id_param,
+                    exercise_id_param,
+                    stream_key_param,
+                    type_param]
 
             logger.info('command {python_interpreter} {capture_script} {stream_param} {output_file}'.format(
                 python_interpreter=python_interpreter,
@@ -78,10 +96,13 @@ class DeviceStartRecordingView(GenericAPIView):
                 output_file=output_file
             ))
 
-            proc = subprocess.Popen(cmd)
-            time.sleep(3)
+            proc1 = subprocess.Popen(cmd1)
+            proc2 = subprocess.Popen(cmd2)
+
+            time.sleep(DeviceStartRecordingView.SLEEP_INTERVAL)
             job = ExamCreationJob()
-            job.pid = proc.pid
+            job.pid_capture = proc1.pid
+            job.pid_stream = proc2.pid
             job.user_id = user_id
             job.exercise_id = exercise_id
             job.device_id = device_id
@@ -92,7 +113,8 @@ class DeviceStartRecordingView(GenericAPIView):
             job.save()
 
             return Response({
-                "pid": proc.pid,
+                "pid_capture": proc1.pid,
+                "pid_stream": proc2.pid,
                 "id": job.id
             }, status=status.HTTP_201_CREATED)
 
@@ -117,13 +139,29 @@ class DeviceStopRecordingView(GenericAPIView):
             job = ExamCreationJob.objects.get(pk=job_id)
             if job is None:
                 return Response({}, status.HTTP_404_NOT_FOUND)
-            os.system("kill {0}".format(job.pid))
+            # finishing capture
+            try:
+                os.system("kill {0}".format(job.pid_capture))
+            except:
+                logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+            # finishing stream
+            try:
+                os.system("kill {0}".format(job.pid_stream))
+            except:
+                logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
             job.is_recording_done = True
-            now = datetime.now(timezone.utc)
-            delta = now - job.created
-            job.exam_duration = delta.seconds - DeviceStopRecordingView.WAIT_TIME
-            job.save()
+            file_name = '{}/{}'.format(settings.VIDEOS_ROOT,  job.video_file)
+            total_video_duration = get_video_len(file_name)
+            seconds = 0
+            if total_video_duration['hours'] > 0:
+                seconds += total_video_duration['hours'] /3600
+            if total_video_duration['minutes'] > 0:
+                seconds += total_video_duration['minutes'] / 60
+            if total_video_duration['seconds'] > 0:
+                seconds += int(total_video_duration['seconds'])
 
+            job.exam_duration = seconds
+            job.save()
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
         except:

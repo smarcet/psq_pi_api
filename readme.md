@@ -38,4 +38,4 @@ django-admin compilemessages
 
 # kill debug process
 
-sudo lsof -t -i tcp:8000 | xargs kill -9
+sudo lsof -t -i tcp:8001 | xargs kill -9

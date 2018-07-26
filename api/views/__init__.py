@@ -1,1 +1,2 @@
 from .devices import DeviceOpenRegistrationView, DeviceStartRecordingView, DeviceStopRecordingView
+from .processes import ProcessesCheckView

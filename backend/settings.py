@@ -160,6 +160,8 @@ LOGGING = {
 
 API_HOST = os.getenv("API_HOST")
 STREAM_HOST = os.getenv("STREAM_HOST")
+RTMP_HOST = os.getenv("RTMP_HOST")
+DEVICE_TYPE = os.getenv("DEVICE_TYPE", "PI")
 
 # Import local settings
 try:

@@ -1,7 +1,6 @@
-from rest_framework_jwt.views import (obtain_jwt_token, refresh_jwt_token)
 from django.urls import path
 
-from .views import DeviceOpenRegistrationView, DeviceStartRecordingView, DeviceStopRecordingView
+from .views import DeviceOpenRegistrationView, DeviceStartRecordingView, DeviceStopRecordingView, ProcessesCheckView
 
 urlpatterns = [
     path('devices/current/registration', DeviceOpenRegistrationView.as_view(), name='device-open-registration'),
@@ -11,4 +10,5 @@ urlpatterns = [
     path('devices/<int:device_id>/users/<int:user_id>/exercises/<int:exercise_id>/record-jobs/<int:job_id>',
          DeviceStopRecordingView.as_view(),
          name='stop-exercise-recording'),
+    path('processes/<int:pid>/exists', ProcessesCheckView.as_view(), name="processes-check-views")
 ]
