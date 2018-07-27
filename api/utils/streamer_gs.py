@@ -44,10 +44,11 @@ class StreamBroadcaster:
             h264enc = 'x264enc'
             h264opt = 'speed-preset=3 tune=zerolatency bitrate=5000 threads=4 option-string=scenecut=0'
 
-        str_pipeline =  "souphttpsrc location={stream_url} ! multipartdemux ! image/jpeg, width={width}, height={height}, " \
-            "framerate={framerate} ! " \
+        str_pipeline =  "souphttpsrc location={stream_url} ! multipartdemux ! " \
+            "image/jpeg, width={width}, height={height} ! " \
             "jpegdec ! {h264enc} {h264opt} ! video/x-h264,profile=baseline ! " \
-            "h264parse ! flvmux ! rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
+            "h264parse ! flvmux ! " \
+            "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
                 stream_url=self.stream_url,
                 h264enc=h264enc,
                 h264opt=h264opt,
@@ -55,7 +56,6 @@ class StreamBroadcaster:
                 stream_key=self.stream_key,
                 width=1280,
                 height=720,
-                framerate="10/1",
                 exercise_id=self.exercise_id,
                 user_id=self.user_id
             )

@@ -33,25 +33,13 @@ class StreamCapture:
         Gst.init(None)
 
         # build the pipeline
-        # self.pipeline = Gst.parse_launch(
-        #     "souphttpsrc location={stream_url} is-live=true do-timestamp=true keep-alive=true retries=10 ! "
-        #     "multipartdemux ! image/jpeg, width={width}, height={height}, framerate={framerate} ! jpegdec ! "
-        #     "jpegenc quality={quality} ! avimux ! filesink location={location}".format(
-        #         stream_url=self.stream_url,
-        #         width=1280,
-        #         height=720,
-        #         framerate="10/1",
-        #         quality=50,
-        #         location="output.avi"
-        #     )
-        # )
+
         str_pipeline = "souphttpsrc location={stream_url} is-live=true do-timestamp=true keep-alive=true retries=10 ! " \
             "multipartdemux ! image/jpeg, width={width}, height={height} ! " \
             "matroskamux ! filesink location={location}".format(
                 stream_url=self.stream_url,
                 width=1280,
                 height=720,
-               # framerate="10/1",
                 location=self.output_file
             )
 

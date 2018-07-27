@@ -7,7 +7,6 @@ import requests
 from django.conf import settings
 import logging
 import os
-import subprocess
 import os.path
 
 
@@ -29,46 +28,8 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                 if not os.path.exists(input_file):
                     print("file {input_file} does not exists, skipping it...".format(input_file=input_file))
                     continue
-
-                output_file_ogg = os.path.splitext(input_file)[0] + '.ogg'
-                output_file_webm = os.path.splitext(input_file)[0] + '.webm'
-                output_file_mp4 = os.path.splitext(input_file)[0] + '.mp4'
-
-                # ogg
-                cmd = 'gst-launch-1.0 -e filesrc location={input_file} ! matroskademux ! jpegdec ! videoconvert ! ' \
-                      'theoraenc bitrate=1000000 ! oggmux ! filesink location={output_file}'.format(
-                    input_file=input_file, output_file=output_file_ogg)
-                print("about to run command {cmd}".format(cmd=cmd))
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                process.wait()
-                print("command return code {return_code}".format(return_code=process.returncode))
-
-                # webm
-                cmd = 'gst-launch-1.0 -e filesrc location={input_file} ! matroskademux ! jpegdec ! videoconvert ! ' \
-                      'vp8enc ! webmmux ! filesink location={output_file}'.format(
-                    input_file=input_file, output_file=output_file_webm)
-
-                print("about to run command {cmd}".format(cmd=cmd))
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                process.wait()
-
-                print("command return code {return_code}".format(return_code=process.returncode))
-
-                # mp4
-                cmd = 'gst-launch-1.0 -e filesrc location={input_file} ! matroskademux ! jpegdec ! videoconvert ! ' \
-                      'x264enc ! qtmux ! filesink location={output_file}'.format(
-                    input_file=input_file, output_file=output_file_mp4)
-
-                print("about to run command {cmd}".format(cmd=cmd))
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                process.wait()
-
-                print("command return code {return_code}".format(return_code=process.returncode))
-
                 files = {
-                    'file_ogg': open(output_file_ogg, 'rb'),
-                    'file_webm': open(output_file_webm, 'rb'),
-                    'file_mp4': open(output_file_mp4, 'rb'),
+                    'file': open(input_file, 'rb'),
                 }
 
                 values = {
@@ -100,8 +61,5 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
 
                 # delete files
                 os.remove(input_file)
-                #os.remove(output_file_mp4)
-                #os.remove(output_file_ogg)
-                #os.remove(output_file_webm)
             except:
                 print("Unexpected error:", sys.exc_info()[0])

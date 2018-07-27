@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 import requests
 from rest_framework.response import Response
-from api.utils import get_video_len
+from datetime import datetime, timezone
 from ..models import ExamCreationJob
 from ..utils import get_mac_address
 import socket
@@ -132,7 +132,7 @@ class DeviceStopRecordingView(GenericAPIView):
 
     @staticmethod
     def put(request, *args, **kwargs):
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger('api')
         try:
 
             job_id = kwargs['job_id']
@@ -149,18 +149,11 @@ class DeviceStopRecordingView(GenericAPIView):
                 os.system("kill {0}".format(job.pid_stream))
             except:
                 logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
-            job.is_recording_done = True
-            file_name = '{}/{}'.format(settings.VIDEOS_ROOT,  job.video_file)
-            total_video_duration = get_video_len(file_name)
-            seconds = 0
-            if total_video_duration['hours'] > 0:
-                seconds += total_video_duration['hours'] /3600
-            if total_video_duration['minutes'] > 0:
-                seconds += total_video_duration['minutes'] / 60
-            if total_video_duration['seconds'] > 0:
-                seconds += int(total_video_duration['seconds'])
 
-            job.exam_duration = seconds
+            job.is_recording_done = True
+            now = datetime.now(timezone.utc)
+            delta = now - job.created
+            job.exam_duration = delta.seconds - DeviceStopRecordingView.WAIT_TIME
             job.save()
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
