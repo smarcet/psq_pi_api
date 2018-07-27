@@ -28,38 +28,42 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                 if not os.path.exists(input_file):
                     print("file {input_file} does not exists, skipping it...".format(input_file=input_file))
                     continue
-                files = {
-                    'file': open(input_file, 'rb'),
-                }
 
-                values = {
-                    'filename': job.video_file,
-                    'exercise': job.exercise_id,
-                    'device': job.device_id,
-                    'device_mac_address': job.device_mac_address,
-                    'author': job.user_id,
-                    'duration': job.exam_duration,
-                    'taker': job.user_id,
-                }
+                print("uploading file {input_file} ...".format(input_file=input_file))
+                with open(input_file, 'rb') as raw_video_file:
+                    files = {
+                        'file': raw_video_file,
+                    }
 
-                session = requests.Session()
-                session.verify = False
-                response = session.post(endpoint, files=files, data=values)
+                    values = {
+                        'filename': job.video_file,
+                        'exercise': job.exercise_id,
+                        'device': job.device_id,
+                        'device_mac_address': job.device_mac_address,
+                        'author': job.user_id,
+                        'duration': job.exam_duration,
+                        'taker': job.user_id,
+                    }
 
-                if response.status_code != 201:
-                    logger.error("response from api {status_code}".format(
-                        status_code=response.status_code,
-                    ))
+                    session = requests.Session()
+                    session.verify = False
+                    response = session.post(endpoint, files=files, data=values)
 
-                    raise Exception("response from api {status_code}".format(
-                        status_code=response.status_code,
-                    ))
+                    if response.status_code != 201:
+                        logger.error("response from api {status_code}".format(
+                            status_code=response.status_code,
+                        ))
 
-                job.mark_as_processed()
-                job.save(force_update=True)
-                print("job {id} processed!".format(id=job.id))
+                        raise Exception("response from api {status_code}".format(
+                            status_code=response.status_code,
+                        ))
+
+                    job.mark_as_processed()
+                    job.save(force_update=True)
+                    print("job {id} processed!".format(id=job.id))
 
                 # delete files
+                print("deleting file {input_file}".format(input_file=input_file))
                 os.remove(input_file)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
