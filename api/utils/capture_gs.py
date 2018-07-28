@@ -35,11 +35,12 @@ class StreamCapture:
         # build the pipeline
 
         str_pipeline = "souphttpsrc location={stream_url} is-live=true do-timestamp=true keep-alive=true retries=10 ! " \
-            "multipartdemux ! image/jpeg, width={width}, height={height} ! " \
+            "multipartdemux ! image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
             "matroskamux ! filesink location={location}".format(
                 stream_url=self.stream_url,
                 width=1280,
                 height=720,
+                framerate="20/1",
                 location=self.output_file
             )
 
