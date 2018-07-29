@@ -23,6 +23,8 @@ class StreamBroadcaster:
         self.exercise_id = exercise_id
         self.user_id = user_id
         self.type = type
+        self.running = True
+        self.is_live = False
         self.broadcasting = False
         self.must_stop = False
         print('registering signals')
@@ -30,19 +32,17 @@ class StreamBroadcaster:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def exit_gracefully(self, signum, frame):
-        print("exiting ...")
         self.stop()
-        sys.exit(0)
 
     def start(self):
         # initialize GStreamer
         Gst.init(None)
         if self.type == 'PI':
             h264enc = 'omxh264enc'
-            h264opt = 'target-bitrate=1000000 control-rate=variable'
+            h264opt = 'target-bitrate=8000 control-rate=variable'
         else:
             h264enc = 'x264enc'
-            h264opt = 'speed-preset=3 tune=zerolatency bitrate=5000 threads=4 option-string=scenecut=0'
+            h264opt = 'tune=zerolatency bitrate=8000 threads=4 option-string=scenecut=0'
 
         str_pipeline =  "souphttpsrc location={stream_url} ! multipartdemux ! " \
             "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
@@ -56,7 +56,7 @@ class StreamBroadcaster:
                 stream_key=self.stream_key,
                 width=1280,
                 height=720,
-                framerate="20/1",
+                framerate="10/1",
                 exercise_id=self.exercise_id,
                 user_id=self.user_id
             )
@@ -64,45 +64,50 @@ class StreamBroadcaster:
         self.pipeline = Gst.parse_launch(str_pipeline)
 
         # start playing
-        while True:
+        print("CAPTURE_GS - running pipeline {pipeline}".format(pipeline=str_pipeline))
 
-            self.pipeline.set_state(Gst.State.PLAYING)
-            print("pipeline broadcasting")
-            self.broadcasting = True
-            # wait until EOS or error
-            self.bus = self.pipeline.get_bus()
+        print("CAPTURE_GS - Setting pipeline to PAUSED ...")
+        res = self.pipeline.set_state(Gst.State.PAUSED)
 
-            while self.broadcasting:
-                print("broadcasting")
-                msg = self.bus.timed_pop_filtered(
-                    1000 * Gst.MSECOND,
-                    (Gst.MessageType.ERROR
-                     | Gst.MessageType.EOS)
-                )
-                if msg:
+        if res == Gst.StateChangeReturn.NO_PREROLL:
+            print("CAPTURE_GS - Pipeline is live and does not need PREROLL ...\n")
+            self.is_live = True
 
-                    if msg.type == Gst.MessageType.ERROR:
-                        print("broadcast fatal error :/ !!!!")
-                        res = msg.parse_error()
-                        print(msg.src.name)
-                        print(res[1])
-                        exit(-1)
-                    if msg.type == Gst.MessageType.EOS:
-                        print("broadcast error. EOS Reached")
+        # wait until EOS or error
+        self.bus = self.pipeline.get_bus()
+        print("CAPTURE_GS - Setting pipeline to PLAYING ...")
+        res = self.pipeline.set_state(Gst.State.PLAYING)
 
-                    print("retrying ...")
-                    self.broadcasting = False
+        while self.running:
+            msg = self.bus.timed_pop_filtered(
+                5 * 1000 * Gst.MSECOND,
+                (Gst.MessageType.ANY)
+            )
+            if msg:
+                if msg.type == Gst.MessageType.ERROR:
+                    err, debug = msg.parse_error()
+                    print("STREAMER_GS - Error received from element %s: %s" % (
+                        msg.src.get_name(), err))
+                    print("STREAMER_GS - Debugging information: %s" % debug)
+                    exit(-1)
+                elif msg.type == Gst.MessageType.EOS:
+                    print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
+                    break
 
-                time.sleep(StreamBroadcaster.SLEEP_INTERVAL)
-
-            if self.must_stop:
-                print("end of broadcasting")
-                break
+        print("STREAMER_GS - Execution ending ...")
+        print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
+        res = self.pipeline.set_state(Gst.State.PAUSED)
+        print("STREAMER_GS - Setting pipeline to READY ...\n")
+        res = self.pipeline.set_state(Gst.State.READY)
+        print("STREAMER_GS - Setting pipeline to NULL ...\n")
+        res = self.pipeline.set_state(Gst.State.NULL)
+        print("STREAMER_GS - Freeing pipeline ...\n")
+        self.pipeline = None
+        self.bus = None
 
     def stop(self):
-        # free resources
-        self.must_stop = True
-        self.pipeline.set_state(Gst.State.NULL)
+        print("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
+        self.pipeline.send_event(Gst.Event.new_eos())
 
 
 def main(argv):
@@ -126,17 +131,17 @@ def main(argv):
             print('streamer_gs.py -s <stream> -o <output> -k <stream_key> -e <exercise> -u <user> -t <type>')
             sys.exit()
         elif opt in ("-s", "--stream"):
-            stream_url = arg
+            stream_url = arg.strip()
         elif opt in ("-o", "--output"):
-            rtmp_url = arg
+            rtmp_url = arg.strip()
         elif opt in ("-k", "--stream_key"):
-            stream_key = arg
+            stream_key = arg.strip()
         elif opt in ("-e", "--exercise"):
-            exercise_id = arg
+            exercise_id = arg.strip()
         elif opt in ("-u", "--user"):
-            user_id = arg
+            user_id = arg.strip()
         elif opt in ("-t", "--type"):
-            type = arg
+            type = arg.strip()
 
     broadcast = StreamBroadcaster(stream_url, rtmp_url, stream_key, exercise_id, user_id, type)
     broadcast.start()

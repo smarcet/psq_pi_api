@@ -76,9 +76,10 @@ class DeviceStartRecordingView(GenericAPIView):
             streamer_script = '{}/api/utils/streamer_gs.py'.format(settings.BASE_DIR)
 
             cmd1 = [python_interpreter,
-                   capture_script,
-                   stream_param,
-                   output_file]
+                    capture_script,
+                    stream_param,
+                    output_file,
+                    type_param]
 
             cmd2 = [python_interpreter,
                     streamer_script,
@@ -134,7 +135,7 @@ class DeviceStopRecordingView(GenericAPIView):
     def put(request, *args, **kwargs):
         logger = logging.getLogger('api')
         try:
-
+            timer = int(request.GET.get("timer"))
             job_id = kwargs['job_id']
             job = ExamCreationJob.objects.get(pk=job_id)
             if job is None:
@@ -151,10 +152,42 @@ class DeviceStopRecordingView(GenericAPIView):
                 logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
 
             job.is_recording_done = True
-            now = datetime.now(timezone.utc)
-            delta = now - job.created
-            job.exam_duration = delta.seconds - DeviceStopRecordingView.WAIT_TIME
+            job.exam_duration = timer
             job.save()
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @staticmethod
+    def delete(request, *args, **kwargs):
+        logger = logging.getLogger('api')
+        try:
+            timer = int(request.GET.get("timer"))
+            job_id = kwargs['job_id']
+            job = ExamCreationJob.objects.get(pk=job_id)
+            if job is None:
+                return Response({}, status.HTTP_404_NOT_FOUND)
+            # finishing capture
+            try:
+                os.system("kill {0}".format(job.pid_capture))
+            except:
+                logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+            # finishing stream
+            try:
+                os.system("kill {0}".format(job.pid_stream))
+            except:
+                logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+
+            input_file = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
+
+            if os.path.exists(input_file):
+                os.remove(input_file)
+
+            job.delete()
+
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
         except:
