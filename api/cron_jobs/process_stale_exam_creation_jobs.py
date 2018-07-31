@@ -23,8 +23,18 @@ class ProcessStaleExamCreationJobsCronJob(CronJobBase):
         for job in jobs:
             try:
                 if job.minutes_from_last_ping() >= 5:
-                    logger.info("ProcessStaleExamCreationJobsCronJob - deleting stale job ...")
+                    logger.info("ProcessStaleExamCreationJobsCronJob - deleting stale job id {job_id}...".format(job_id=job.id))
                     input_file = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
+                    # finishing capture
+                    try:
+                        os.system("kill {0}".format(job.pid_capture))
+                    except:
+                        warning.error("ProcessStaleExamCreationJobsCronJob - Unexpected error {error}".format(error=sys.exc_info()[0]))
+                    # finishing stream
+                    try:
+                        os.system("kill {0}".format(job.pid_stream))
+                    except:
+                        logger.warning("ProcessStaleExamCreationJobsCronJob - Unexpected error {error}".format(error=sys.exc_info()[0]))
 
                     if os.path.exists(input_file):
                         # delete files

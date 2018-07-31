@@ -38,6 +38,7 @@ class RecordJobPingView(GenericAPIView):
             logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class DeviceOpenRegistrationView(GenericAPIView):
     # open registration
     permission_classes = (AllowAny,)
@@ -142,6 +143,7 @@ class DeviceStartRecordingView(GenericAPIView):
             job.is_recording_done = False
             job.is_processed = False
             job.device_mac_address = get_mac_address()
+            job.do_ping()
             job.save()
 
             return Response({

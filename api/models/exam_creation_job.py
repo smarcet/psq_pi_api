@@ -1,3 +1,4 @@
+import pytz
 from django.db import models
 from model_utils.models import TimeStampedModel
 from macaddress.fields import MACAddressField
@@ -26,6 +27,7 @@ class ExamCreationJob(TimeStampedModel):
         self.save()
 
     def minutes_from_last_ping(self):
-        now = datetime.utcnow()
-        diff = now - self.last_ping
+        now = datetime.utcnow().replace(tzinfo=pytz.UTC)
+        last_ping = self.last_ping.replace(tzinfo=pytz.UTC)
+        diff = now - last_ping
         return int(diff.total_seconds() / 60)
