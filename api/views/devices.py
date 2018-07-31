@@ -5,7 +5,6 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 import requests
 from rest_framework.response import Response
-from datetime import datetime, timezone
 from ..models import ExamCreationJob
 from ..utils import get_mac_address
 import socket
@@ -13,6 +12,8 @@ import subprocess
 import time
 import sys
 import logging
+import psutil
+from django.utils.translation import ugettext_lazy as _
 
 
 class DeviceOpenRegistrationView(GenericAPIView):
@@ -60,6 +61,13 @@ class DeviceStartRecordingView(GenericAPIView):
             user_id = kwargs['user_id']
             exercise_id = str(kwargs['exercise_id'])
             stream_key = str(request.GET.get("stream_key"))
+            res = psutil.disk_usage(settings.VIDEOS_ROOT)
+            free_space_mb = res.free / 1024 / 1024
+
+            if free_space_mb < settings.MIN_AVAILABLE_FREE_SPACE:
+                return Response(data=
+                 { 'error': _("not available free space, try it later")}
+                , status=status.HTTP_412_PRECONDITION_FAILED)
 
             stream_param = '-s {}'.format(settings.STREAM_HOST)
             timestamp = int(time.time())
@@ -99,8 +107,9 @@ class DeviceStartRecordingView(GenericAPIView):
 
             proc1 = subprocess.Popen(cmd1)
             proc2 = subprocess.Popen(cmd2)
-
+            # wait to get pids
             time.sleep(DeviceStartRecordingView.SLEEP_INTERVAL)
+
             job = ExamCreationJob()
             job.pid_capture = proc1.pid
             job.pid_stream = proc2.pid

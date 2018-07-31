@@ -137,22 +137,42 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+            'console': {
+                # exact format is not important, this is the minimum information
+                'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+            },
+     },
     'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
         'file': {
-            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'filename':  os.path.join(BASE_DIR, "web.log"),
         },
     },
     'loggers': {
         'django': {
             'handlers': ['file'],
-            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'level': 'DEBUG',
             'propagate': True,
         },
         'api': {
             'handlers': ['file'],
-            'level': os.getenv("LOG_LEVEL", "DEBUG"),
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'transcoder': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'cronjobs': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
@@ -162,6 +182,7 @@ API_HOST = os.getenv("API_HOST")
 STREAM_HOST = os.getenv("STREAM_HOST")
 RTMP_HOST = os.getenv("RTMP_HOST")
 DEVICE_TYPE = os.getenv("DEVICE_TYPE", "PI")
+MIN_AVAILABLE_FREE_SPACE = os.getenv("MIN_AVAILABLE_FREE_SPACE", 20 * 1024)
 
 # Import local settings
 try:
