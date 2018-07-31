@@ -16,6 +16,28 @@ import psutil
 from django.utils.translation import ugettext_lazy as _
 
 
+class RecordJobPingView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = serializers.Serializer
+    queryset = ExamCreationJob.objects.all()
+
+    @staticmethod
+    def put(request, *args, **kwargs):
+        logger = logging.getLogger('api')
+        try:
+            job_id = kwargs['job_id']
+            job = ExamCreationJob.objects.get(pk=job_id)
+            if job is None:
+                return Response({}, status.HTTP_404_NOT_FOUND)
+            job.do_ping()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class DeviceOpenRegistrationView(GenericAPIView):
     # open registration
     permission_classes = (AllowAny,)

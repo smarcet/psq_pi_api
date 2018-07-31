@@ -129,6 +129,7 @@ USE_TZ = True
 # http://django-cron.readthedocs.io/en/latest/configuration.html
 CRON_CLASSES = [
     "api.cron_jobs.ProcessExamCreationJobsCronJob",
+    "api.cron_jobs.ProcessStaleExamCreationJobsCronJob",
 ]
 
 STATIC_URL = '/static/'
