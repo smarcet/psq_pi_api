@@ -43,12 +43,13 @@ class ExamGenerateShareUrlView(GenericAPIView):
 
             return Response({
                 'url': "{host}/guest/stream?expires={expires}&signature={signature}&device_id="
-                       "{device_id}&exercise_id={exercise_id}&user_id={user_id}".format(
+                       "{device_id}&exercise_id={exercise_id}&user_id={user_id}&exercise_max_duration={exercise_max_duration}".format(
                     host=settings.WEB_HOST,
                     expires=expires,
                     signature=signature,
                     device_id=device_id,
                     exercise_id=exercise_id,
+                    exercise_max_duration=exercise_max_duration,
                     user_id=user_id
                 )
             }, status=status.HTTP_200_OK)
