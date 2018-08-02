@@ -1,4 +1,6 @@
 import os
+
+from django.db.models import Q
 from rest_framework import serializers, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
@@ -91,6 +93,12 @@ class DeviceStartRecordingView(GenericAPIView):
                 return Response(data=
                  { 'error': _("not available free space, try it later")}
                 , status=status.HTTP_412_PRECONDITION_FAILED)
+
+            running_jobs = ExamCreationJob.objects.filter(Q(is_recording_done=False) & Q(is_processed=False)).count()
+            if running_jobs > 0 :
+                return Response(data=
+                                {'error': _("there is already an exercise running. try it later")}
+                                , status=status.HTTP_412_PRECONDITION_FAILED)
 
             stream_param = '-s {}'.format(settings.STREAM_HOST)
             timestamp = int(time.time())

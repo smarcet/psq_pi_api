@@ -23,7 +23,7 @@ class ExamCreationJob(TimeStampedModel):
         self.is_processed = True
 
     def do_ping(self):
-        self.last_ping = datetime.utcnow()
+        self.last_ping = datetime.utcnow().replace(tzinfo=pytz.UTC)
         self.save()
 
     def minutes_from_last_ping(self):

@@ -13,7 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 class ProcessStaleExamCreationJobsCronJob(CronJobBase):
 
     RUN_EVERY_MINS = 1  # every minute
-
+    MIN_MINUTES_FROM_LATEST_PING = 2
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'api.ProcessStaleExamCreationJobsCronJob'  # a unique code
 
@@ -22,7 +22,7 @@ class ProcessStaleExamCreationJobsCronJob(CronJobBase):
         jobs = ExamCreationJob.objects.filter(Q(is_recording_done=False) & Q(is_processed=False))
         for job in jobs:
             try:
-                if job.minutes_from_last_ping() >= 5:
+                if job.minutes_from_last_ping() >= MIN_MINUTES_FROM_LATEST_PING:
                     logger.info("ProcessStaleExamCreationJobsCronJob - deleting stale job id {job_id}...".format(job_id=job.id))
                     input_file = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
                     # finishing capture

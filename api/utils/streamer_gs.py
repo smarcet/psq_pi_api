@@ -42,15 +42,16 @@ class StreamBroadcaster:
             Gst.init(None)
             if self.type == 'PI':
                 h264enc = 'omxh264enc'
-                h264opt = 'target-bitrate=8000 control-rate=variable'
+                h264opt = 'target-bitrate=2200 control-rate=variable'
             else:
                 h264enc = 'x264enc'
-                h264opt = 'tune=zerolatency bitrate=8000 threads=4 option-string=scenecut=0'
+                h264opt = 'tune=zerolatency bitrate=2200 threads=4 option-string=scenecut=0'
 
-            str_pipeline =  "souphttpsrc location={stream_url} ! multipartdemux ! " \
+            str_pipeline =  "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
                 "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
-                "jpegdec ! {h264enc} {h264opt} ! video/x-h264,profile=baseline ! " \
-                "h264parse ! flvmux ! " \
+                "jpegdec ! videoscale n-threads=4 ! video/x-raw,width=640,height=360 ! {h264enc} {h264opt} !" \
+                "video/x-h264,profile=high ! " \
+                "h264parse ! flvmux streamable=true latency=1000 ! " \
                 "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
                     stream_url=self.stream_url,
                     h264enc=h264enc,
@@ -59,7 +60,7 @@ class StreamBroadcaster:
                     stream_key=self.stream_key,
                     width=1280,
                     height=720,
-                    framerate="10/1",
+                    framerate="20/1",
                     exercise_id=self.exercise_id,
                     user_id=self.user_id
                 )
