@@ -50,7 +50,7 @@ class StreamBroadcaster:
 
             str_pipeline =  "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
                 "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
-                "jpegdec ! videoscale n-threads=4 ! video/x-raw,width=640,height=360 ! {h264enc} {h264opt} !" \
+                "jpegdec ! videoscale ! video/x-raw,width=640,height=360 ! {h264enc} {h264opt} !" \
                 "video/x-h264,profile=high ! " \
                 "h264parse ! flvmux streamable=true latency=1000 ! " \
                 "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(

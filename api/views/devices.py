@@ -140,8 +140,7 @@ class DeviceStartRecordingView(GenericAPIView):
 
             proc1 = subprocess.Popen(cmd1)
 
-            logger.info('command {python_interpreter} {streamer_script} {stream_param} {rtmp_url} {user_id_param} '
-                        '{exercise_id_param} {stream_key_param} {type_param} {output_file]'.format(
+            logger.info('command {python_interpreter} {streamer_script} {stream_param} {rtmp_url} {user_id_param} {exercise_id_param} {stream_key_param} {type_param} {output_file}'.format(
                 python_interpreter=python_interpreter,
                 streamer_script=streamer_script,
                 stream_param=stream_param,
