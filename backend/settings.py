@@ -166,7 +166,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'transcoder': {
+        'background_processes': {
             'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,

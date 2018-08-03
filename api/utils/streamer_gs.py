@@ -2,7 +2,7 @@
 
 import sys, signal, getopt, os
 import gi
-
+import logging
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GObject, GLib
 
@@ -29,9 +29,10 @@ class StreamBroadcaster:
         self.is_live = False
         self.broadcasting = False
         self.must_stop = False
-        print('registering signals')
+        self.logger = logging.getLogger('background_processes')
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
+
 
     def exit_gracefully(self, signum, frame):
         self.stop()
@@ -68,18 +69,18 @@ class StreamBroadcaster:
             self.pipeline = Gst.parse_launch(str_pipeline)
 
             # start playing
-            print("CAPTURE_GS - running pipeline {pipeline}".format(pipeline=str_pipeline))
+            self.logger.info("CAPTURE_GS - running pipeline {pipeline}".format(pipeline=str_pipeline))
 
-            print("CAPTURE_GS - Setting pipeline to PAUSED ...")
+            self.logger.info("CAPTURE_GS - Setting pipeline to PAUSED ...")
             res = self.pipeline.set_state(Gst.State.PAUSED)
 
             if res == Gst.StateChangeReturn.NO_PREROLL:
-                print("CAPTURE_GS - Pipeline is live and does not need PREROLL ...\n")
+                self.logger.info("CAPTURE_GS - Pipeline is live and does not need PREROLL ...\n")
                 self.is_live = True
 
             # wait until EOS or error
             self.bus = self.pipeline.get_bus()
-            print("CAPTURE_GS - Setting pipeline to PLAYING ...")
+            self.logger.info("CAPTURE_GS - Setting pipeline to PLAYING ...")
             res = self.pipeline.set_state(Gst.State.PLAYING)
 
             while self.running:
@@ -90,29 +91,30 @@ class StreamBroadcaster:
                 if msg:
                     if msg.type == Gst.MessageType.ERROR:
                         err, debug = msg.parse_error()
-                        print("STREAMER_GS - Error received from element %s: %s" % (
+                        self.logger.info("STREAMER_GS - Error received from element %s: %s" % (
                             msg.src.get_name(), err))
-                        print("STREAMER_GS - Debugging information: %s" % debug)
+                        self.logger.info("STREAMER_GS - Debugging information: %s" % debug)
                         break
                     elif msg.type == Gst.MessageType.EOS:
-                        print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
+                        self.logger.info("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
                         break
 
-            print("STREAMER_GS - Execution ending ...")
-            print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
+            self.logger.info("STREAMER_GS - Execution ending ...")
+            self.logger.info("STREAMER_GS - Setting pipeline to PAUSED ...\n")
             res = self.pipeline.set_state(Gst.State.PAUSED)
-            print("STREAMER_GS - Setting pipeline to READY ...\n")
+            self.logger.info("STREAMER_GS - Setting pipeline to READY ...\n")
             res = self.pipeline.set_state(Gst.State.READY)
-            print("STREAMER_GS - Setting pipeline to NULL ...\n")
+            self.logger.info("STREAMER_GS - Setting pipeline to NULL ...\n")
             res = self.pipeline.set_state(Gst.State.NULL)
-            print("STREAMER_GS - Freeing pipeline ...\n")
+            self.logger.info("STREAMER_GS - Freeing pipeline ...\n")
             self.pipeline = None
             self.bus = None
+            self.logger = None
         finally:
             os.unlink(self.pid_file)
 
     def stop(self):
-        print("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
+        self.logger.info("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
         self.pipeline.send_event(Gst.Event.new_eos())
 
 
