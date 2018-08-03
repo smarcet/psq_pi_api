@@ -91,11 +91,11 @@ class DeviceStartRecordingView(GenericAPIView):
 
             if free_space_mb < settings.MIN_AVAILABLE_FREE_SPACE:
                 return Response(data=
-                 { 'error': _("not available free space, try it later")}
-                , status=status.HTTP_412_PRECONDITION_FAILED)
+                                {'error': _("not available free space, try it later")}
+                                , status=status.HTTP_412_PRECONDITION_FAILED)
 
             running_jobs = ExamCreationJob.objects.filter(Q(is_recording_done=False) & Q(is_processed=False)).count()
-            if running_jobs > 0 :
+            if running_jobs > 0:
                 return Response(data=
                                 {'error': _("there is already an exercise running. try it later")}
                                 , status=status.HTTP_412_PRECONDITION_FAILED)
@@ -129,14 +129,30 @@ class DeviceStartRecordingView(GenericAPIView):
                     stream_key_param,
                     type_param]
 
-            logger.info('command {python_interpreter} {capture_script} {stream_param} {output_file}'.format(
+            logger.info(
+                'command {python_interpreter} {capture_script} {stream_param} {type_param} {output_file}'.format(
+                    python_interpreter=python_interpreter,
+                    capture_script=capture_script,
+                    stream_param=stream_param,
+                    type_param=type_param,
+                    output_file=output_file
+                ))
+
+            proc1 = subprocess.Popen(cmd1)
+
+            logger.info('command {python_interpreter} {streamer_script} {stream_param} {rtmp_url} {user_id_param} '
+                        '{exercise_id_param} {stream_key_param} {type_param} {output_file]'.format(
                 python_interpreter=python_interpreter,
-                capture_script=capture_script,
+                streamer_script=streamer_script,
                 stream_param=stream_param,
+                rtmp_url=rtmp_url,
+                user_id_param=user_id_param,
+                exercise_id_param=exercise_id_param,
+                stream_key_param=stream_key_param,
+                type_param=type_param,
                 output_file=output_file
             ))
 
-            proc1 = subprocess.Popen(cmd1)
             proc2 = subprocess.Popen(cmd2)
             # wait to get pids
             time.sleep(DeviceStartRecordingView.SLEEP_INTERVAL)

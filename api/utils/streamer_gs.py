@@ -69,18 +69,18 @@ class StreamBroadcaster:
             self.pipeline = Gst.parse_launch(str_pipeline)
 
             # start playing
-            self.logger.info("CAPTURE_GS - running pipeline {pipeline}".format(pipeline=str_pipeline))
+            print("CAPTURE_GS - running pipeline {pipeline}".format(pipeline=str_pipeline))
 
-            self.logger.info("CAPTURE_GS - Setting pipeline to PAUSED ...")
+            print("CAPTURE_GS - Setting pipeline to PAUSED ...")
             res = self.pipeline.set_state(Gst.State.PAUSED)
 
             if res == Gst.StateChangeReturn.NO_PREROLL:
-                self.logger.info("CAPTURE_GS - Pipeline is live and does not need PREROLL ...\n")
+                print("CAPTURE_GS - Pipeline is live and does not need PREROLL ...\n")
                 self.is_live = True
 
             # wait until EOS or error
             self.bus = self.pipeline.get_bus()
-            self.logger.info("CAPTURE_GS - Setting pipeline to PLAYING ...")
+            print("CAPTURE_GS - Setting pipeline to PLAYING ...")
             res = self.pipeline.set_state(Gst.State.PLAYING)
 
             while self.running:
@@ -91,22 +91,22 @@ class StreamBroadcaster:
                 if msg:
                     if msg.type == Gst.MessageType.ERROR:
                         err, debug = msg.parse_error()
-                        self.logger.info("STREAMER_GS - Error received from element %s: %s" % (
+                        print("STREAMER_GS - Error received from element %s: %s" % (
                             msg.src.get_name(), err))
-                        self.logger.info("STREAMER_GS - Debugging information: %s" % debug)
+                        print("STREAMER_GS - Debugging information: %s" % debug)
                         break
                     elif msg.type == Gst.MessageType.EOS:
-                        self.logger.info("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
+                        print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
                         break
 
-            self.logger.info("STREAMER_GS - Execution ending ...")
-            self.logger.info("STREAMER_GS - Setting pipeline to PAUSED ...\n")
+            print("STREAMER_GS - Execution ending ...")
+            print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
             res = self.pipeline.set_state(Gst.State.PAUSED)
-            self.logger.info("STREAMER_GS - Setting pipeline to READY ...\n")
+            print("STREAMER_GS - Setting pipeline to READY ...\n")
             res = self.pipeline.set_state(Gst.State.READY)
-            self.logger.info("STREAMER_GS - Setting pipeline to NULL ...\n")
+            print("STREAMER_GS - Setting pipeline to NULL ...\n")
             res = self.pipeline.set_state(Gst.State.NULL)
-            self.logger.info("STREAMER_GS - Freeing pipeline ...\n")
+            print("STREAMER_GS - Freeing pipeline ...\n")
             self.pipeline = None
             self.bus = None
             self.logger = None
@@ -114,7 +114,7 @@ class StreamBroadcaster:
             os.unlink(self.pid_file)
 
     def stop(self):
-        self.logger.info("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
+        print("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
         self.pipeline.send_event(Gst.Event.new_eos())
 
 
