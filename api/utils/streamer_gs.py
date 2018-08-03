@@ -52,7 +52,7 @@ class StreamBroadcaster:
                 "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
                 "jpegdec ! videoscale ! video/x-raw,width=640,height=360 ! {h264enc} {h264opt} !" \
                 "video/x-h264,profile=high ! " \
-                "h264parse ! flvmux streamable=true latency=1000 ! " \
+                "h264parse ! flvmux streamable=true ! " \
                 "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
                     stream_url=self.stream_url,
                     h264enc=h264enc,
