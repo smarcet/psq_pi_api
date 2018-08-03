@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from django.db.models import Q
 from django_cron import CronJobBase, Schedule
@@ -7,64 +8,133 @@ from django.conf import settings
 import logging
 import os
 import os.path
-from django.utils.translation import ugettext_lazy as _
 
 
 class ProcessExamCreationJobsCronJob(CronJobBase):
 
     RUN_EVERY_MINS = 1  # every minute
-
+    CHUNK_SIZE = 1024 * 1024 * 1
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'api.ProcessExamCreationJobsCronJob'  # a unique code
+
+    def md5(self, input_file):
+        hash_md5 = hashlib.md5()
+        with open(input_file, "rb") as f:
+            for chunk in iter(lambda: f.read(ProcessExamCreationJobsCronJob.CHUNK_SIZE), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
 
     def do(self):
         logger = logging.getLogger('cronjobs')
         jobs = ExamCreationJob.objects.filter(Q(is_recording_done=True) & Q(is_processed=False))
-        endpoint = settings.API_HOST + "/exams/upload"
+
         for job in jobs:
             try:
 
+                endpoint = settings.API_HOST + "/exams/upload"
                 input_file = '{}/{}'.format(settings.VIDEOS_ROOT, job.video_file)
 
                 if not os.path.exists(input_file):
                     logger.warning("ProcessExamCreationJobsCronJob - file {input_file} does not exists, skipping it...".format(input_file=input_file))
+                    job.delete()
                     continue
 
-                logger.info("ProcessExamCreationJobsCronJob - uploading file {input_file} ...".format(input_file=input_file))
+                logger.info(
+                    "ProcessExamCreationJobsCronJob - generating md5 checksum of file {input_file} ...".format(input_file=input_file))
 
-                files = {
-                    'file': open(input_file, 'rb'),
-                }
+                file_md5_checksum = self.md5(input_file)
 
-                values = {
-                    'filename': job.video_file,
-                    'exercise': job.exercise_id,
-                    'device': job.device_id,
-                    'device_mac_address': job.device_mac_address,
-                    'author': job.user_id,
-                    'duration': job.exam_duration,
-                    'taker': job.user_id,
-                }
+                logger.info(
+                    "ProcessExamCreationJobsCronJob - uploading file {input_file} ...".format(input_file=input_file))
+                with open(input_file, 'rb') as raw_video_file:
 
-                session = requests.Session()
-                session.verify = False
-                response = session.post(endpoint, files=files, data=values)
+                    session = requests.Session()
+                    session.verify = False
+                    bytes_size = os.path.getsize(input_file)
+                    bytes_read = 0
+                    chunk_nbr = 1
 
-                if response.status_code != 201:
-                    logger.error("ProcessExamCreationJobsCronJob - response from api {status_code}".format(
-                        status_code=response.status_code,
-                    ))
+                    while True:
+                        chunk = raw_video_file.read(ProcessExamCreationJobsCronJob.CHUNK_SIZE)
+                        if not chunk:
+                            break
 
-                    raise Exception("response from api {status_code}".format(
-                        status_code=response.status_code,
-                    ))
+                        files = {
+                            'file': chunk,
+                        }
 
-                job.mark_as_processed()
-                job.save(force_update=True)
-                logger.info("ProcessExamCreationJobsCronJob - job {id} processed!".format(id=job.id))
+                        values = {
+                            'filename': job.video_file
+                        }
+                        headers = {
+                            'Content-Range': "bytes {range_start}-{range_end}/{file_size}".format(
+                                range_start=bytes_read,
+                                range_end=bytes_read + ( len(chunk) - 1 ),
+                                file_size=bytes_size
+                            )
+                        }
 
-                # delete files
-                logger.info("ProcessExamCreationJobsCronJob - deleting file {input_file}".format(input_file=input_file))
-                os.remove(input_file)
+                        bytes_read += len(chunk)
+
+                        logger.info(
+                            "ProcessExamCreationJobsCronJob - uploading file {input_file} chunk {chunk_nbr} bytes_read {bytes_read}...".format(
+                                input_file=input_file,
+                                bytes_read=bytes_read,
+                                chunk_nbr=chunk_nbr
+                            ))
+
+                        response = session.put(endpoint, files=files, headers=headers, data=values)
+
+                        if response.status_code != 200:
+                            logger.error("ProcessExamCreationJobsCronJob - response from api {status_code}".format(
+                                status_code=response.status_code,
+                            ))
+
+                            raise Exception("response from api {status_code}".format(
+                                status_code=response.status_code,
+                            ))
+                        json = response.json()
+                        endpoint = json['url']
+                        chunk_nbr = chunk_nbr + 1
+
+                    values = {
+                        'filename': job.video_file,
+                        'exercise': job.exercise_id,
+                        'device': job.device_id,
+                        'device_mac_address': job.device_mac_address,
+                        'author': job.user_id,
+                        'duration': job.exam_duration,
+                        'taker': job.user_id,
+                        "md5": file_md5_checksum
+                    }
+
+                    logger.info(
+                        "ProcessExamCreationJobsCronJob - doing final post for file {input_file} chunk {chunk_nbr} bytes_read {bytes_read}...".format(
+                            input_file=input_file,
+                            bytes_read=bytes_read,
+                            chunk_nbr=chunk_nbr
+                        ))
+
+                    response = session.post(endpoint, data=values)
+
+                    if response.status_code != 200:
+                        logger.error("ProcessExamCreationJobsCronJob - response from api {status_code}".format(
+                            status_code=response.status_code,
+                        ))
+
+                        raise Exception("response from api {status_code}".format(
+                            status_code=response.status_code,
+                        ))
+
+                    json = response.json()
+
+                    job.mark_as_processed()
+                    job.save(force_update=True)
+                    logger.info("ProcessExamCreationJobsCronJob - job {id} processed!".format(id=job.id))
+
+                    # delete files
+                    logger.info("ProcessExamCreationJobsCronJob - deleting file {input_file}".format(input_file=input_file))
+                    os.remove(input_file)
+
             except:
                 logger.error("ProcessExamCreationJobsCronJob - Unexpected error:", sys.exc_info()[0])
