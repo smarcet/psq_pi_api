@@ -3,12 +3,12 @@
 import sys, signal, getopt, os
 import gi
 import logging
+
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GObject, GLib
 
 
 class StreamBroadcaster:
-
     SLEEP_INTERVAL = 3
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -33,7 +33,6 @@ class StreamBroadcaster:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-
     def exit_gracefully(self, signum, frame):
         self.stop()
 
@@ -43,28 +42,28 @@ class StreamBroadcaster:
             Gst.init(None)
             if self.type == 'PI':
                 h264enc = 'omxh264enc'
-                h264opt = 'target-bitrate=2200 control-rate=variable'
+                h264opt = 'target-bitrate=100000 control-rate=3'
             else:
                 h264enc = 'x264enc'
                 h264opt = 'tune=zerolatency bitrate=2200 threads=4 option-string=scenecut=0'
 
-            str_pipeline =  "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
-                "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
-                "jpegdec ! videoscale ! video/x-raw,width=640,height=360 ! {h264enc} {h264opt} !" \
-                "video/x-h264,profile=high ! " \
-                "h264parse ! flvmux streamable=true ! " \
-                "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
-                    stream_url=self.stream_url,
-                    h264enc=h264enc,
-                    h264opt=h264opt,
-                    rtmp_server=self.rtmp_server,
-                    stream_key=self.stream_key,
-                    width=1280,
-                    height=720,
-                    framerate="20/1",
-                    exercise_id=self.exercise_id,
-                    user_id=self.user_id
-                )
+            str_pipeline = "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
+                           "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
+                           "jpegdec ! {h264enc} {h264opt} !" \
+                           "video/x-h264,profile=high ! " \
+                           "h264parse ! flvmux ! " \
+                           "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
+                stream_url=self.stream_url,
+                h264enc=h264enc,
+                h264opt=h264opt,
+                rtmp_server=self.rtmp_server,
+                stream_key=self.stream_key,
+                width=1280,
+                height=720,
+                framerate="20/1",
+                exercise_id=self.exercise_id,
+                user_id=self.user_id
+            )
 
             self.pipeline = Gst.parse_launch(str_pipeline)
 
@@ -94,10 +93,19 @@ class StreamBroadcaster:
                         print("STREAMER_GS - Error received from element %s: %s" % (
                             msg.src.get_name(), err))
                         print("STREAMER_GS - Debugging information: %s" % debug)
-                        break
+                        print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
+                        res = self.pipeline.set_state(Gst.State.PAUSED)
+                        print("STREAMER_GS - Setting pipeline to READY ...\n")
+                        res = self.pipeline.set_state(Gst.State.READY)
+
                     elif msg.type == Gst.MessageType.EOS:
-                        print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
-                        break
+                        if not self.running:
+                            print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
+                            break
+                        print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
+                        res = self.pipeline.set_state(Gst.State.PAUSED)
+                        print("STREAMER_GS - Setting pipeline to READY ...\n")
+                        res = self.pipeline.set_state(Gst.State.READY)
 
             print("STREAMER_GS - Execution ending ...")
             print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
@@ -114,6 +122,7 @@ class StreamBroadcaster:
             os.unlink(self.pid_file)
 
     def stop(self):
+        self.running = False
         print("STREAMER_GS - EOS on shutdown enabled -- Forcing EOS on the pipeline\n")
         self.pipeline.send_event(Gst.Event.new_eos())
 
