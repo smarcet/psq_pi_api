@@ -77,7 +77,8 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                         bytes_read += len(chunk)
 
                         logger.info(
-                            "ProcessExamCreationJobsCronJob - uploading file {input_file} chunk {chunk_nbr} bytes_read {bytes_read}...".format(
+                            "ProcessExamCreationJobsCronJob - uploading file {input_file} chunk {chunk_nbr} "
+                            "bytes_read {bytes_read}...".format(
                                 input_file=input_file,
                                 bytes_read=bytes_read,
                                 chunk_nbr=chunk_nbr
@@ -136,5 +137,5 @@ class ProcessExamCreationJobsCronJob(CronJobBase):
                     logger.info("ProcessExamCreationJobsCronJob - deleting file {input_file}".format(input_file=input_file))
                     os.remove(input_file)
 
-            except:
-                logger.error("ProcessExamCreationJobsCronJob - Unexpected error:", sys.exc_info()[0])
+            except Exception as exc:
+                logger.error("ProcessExamCreationJobsCronJob - Unexpected error:", exc)

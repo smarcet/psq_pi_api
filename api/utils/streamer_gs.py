@@ -49,7 +49,7 @@ class StreamBroadcaster:
 
             str_pipeline = "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
                            "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
-                           "jpegdec ! {h264enc} {h264opt} !" \
+                           "jpegdec ! {h264enc} {h264opt} ! " \
                            "video/x-h264,profile=high ! " \
                            "h264parse ! flvmux ! " \
                            "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
@@ -93,19 +93,10 @@ class StreamBroadcaster:
                         print("STREAMER_GS - Error received from element %s: %s" % (
                             msg.src.get_name(), err))
                         print("STREAMER_GS - Debugging information: %s" % debug)
-                        print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
-                        res = self.pipeline.set_state(Gst.State.PAUSED)
-                        print("STREAMER_GS - Setting pipeline to READY ...\n")
-                        res = self.pipeline.set_state(Gst.State.READY)
 
                     elif msg.type == Gst.MessageType.EOS:
-                        if not self.running:
-                            print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
-                            break
-                        print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
-                        res = self.pipeline.set_state(Gst.State.PAUSED)
-                        print("STREAMER_GS - Setting pipeline to READY ...\n")
-                        res = self.pipeline.set_state(Gst.State.READY)
+                        print("STREAMER_GS - Got EOS from element {element} ".format(element=msg.src.get_name()))
+                        break
 
             print("STREAMER_GS - Execution ending ...")
             print("STREAMER_GS - Setting pipeline to PAUSED ...\n")
