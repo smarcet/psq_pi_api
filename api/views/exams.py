@@ -30,7 +30,7 @@ class ExamGenerateShareUrlView(GenericAPIView):
             exercise_max_duration = int(request.GET.get("exercise_max_duration"))  # in seconds
             user_id = int(request.GET.get("user_id"))
             now = datetime.utcnow()
-            seconds = exercise_max_duration + (exercise_max_duration * 0.10)
+            seconds = exercise_max_duration + (exercise_max_duration * 2)
             expires = now + relativedelta(seconds=seconds)
             logger.info("ExamGenerateShareUrlView - expiration will be on expires {expires}".format(
                 expires=expires.strftime("%c")))

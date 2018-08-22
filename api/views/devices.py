@@ -34,10 +34,8 @@ class RecordJobPingView(GenericAPIView):
             job.do_ping()
 
             return Response({}, status=status.HTTP_204_NO_CONTENT)
-
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+        except Exception as exc:
+            logger.error("RecordJobPingView - Unexpected error:", exc)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -64,10 +62,9 @@ class DeviceOpenRegistrationView(GenericAPIView):
             response = session.post(endpoint, data=data)
             logger.info("response from api http code {code}".format(code=response.status_code))
             return Response(response.json(), status=response.status_code)
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
-            return Response(sys.exc_info()[0], status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as exc:
+            logger.error("DeviceOpenRegistrationView - Unexpected error:", exc)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class DeviceStartRecordingView(GenericAPIView):
@@ -140,17 +137,18 @@ class DeviceStartRecordingView(GenericAPIView):
 
             proc1 = subprocess.Popen(cmd1)
 
-            logger.info('command {python_interpreter} {streamer_script} {stream_param} {rtmp_url} {user_id_param} {exercise_id_param} {stream_key_param} {type_param} {output_file}'.format(
-                python_interpreter=python_interpreter,
-                streamer_script=streamer_script,
-                stream_param=stream_param,
-                rtmp_url=rtmp_url,
-                user_id_param=user_id_param,
-                exercise_id_param=exercise_id_param,
-                stream_key_param=stream_key_param,
-                type_param=type_param,
-                output_file=output_file
-            ))
+            logger.info(
+                'command {python_interpreter} {streamer_script} {stream_param} {rtmp_url} {user_id_param} {exercise_id_param} {stream_key_param} {type_param} {output_file}'.format(
+                    python_interpreter=python_interpreter,
+                    streamer_script=streamer_script,
+                    stream_param=stream_param,
+                    rtmp_url=rtmp_url,
+                    user_id_param=user_id_param,
+                    exercise_id_param=exercise_id_param,
+                    stream_key_param=stream_key_param,
+                    type_param=type_param,
+                    output_file=output_file
+                ))
 
             proc2 = subprocess.Popen(cmd2)
             # wait to get pids
@@ -175,9 +173,8 @@ class DeviceStartRecordingView(GenericAPIView):
                 "id": job.id
             }, status=status.HTTP_201_CREATED)
 
-        except:
-            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
-            print("Unexpected error:", sys.exc_info()[0])
+        except Exception as exc:
+            logger.error("DeviceStartRecordingView - Unexpected error:", exc)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -212,9 +209,8 @@ class DeviceStopRecordingView(GenericAPIView):
             job.save()
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+        except Exception as exc:
+            logger.error("DeviceStopRecordingView - Unexpected error:", exc)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @staticmethod
@@ -246,7 +242,6 @@ class DeviceStopRecordingView(GenericAPIView):
 
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            logger.error("Unexpected error {error}".format(error=sys.exc_info()[0]))
+        except Exception as exc:
+            logger.error("DeviceStopRecordingView - Unexpected error:", exc)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
