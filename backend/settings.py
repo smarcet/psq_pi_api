@@ -132,6 +132,10 @@ CRON_CLASSES = [
     "api.cron_jobs.ProcessStaleExamCreationJobsCronJob",
 ]
 
+DJANGO_CRON_LOCK_BACKEND = 'django_cron.backends.lock.file.FileLock'
+
+DJANGO_CRON_LOCKFILE_PATH = '/tmp'
+
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
