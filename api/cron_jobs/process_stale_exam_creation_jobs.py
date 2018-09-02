@@ -1,6 +1,6 @@
 import sys
 from django.db.models import Q
-from django_cron import CronJobBase, Schedule
+from django_cron import Schedule
 from ..models import ExamCreationJob
 from django.conf import settings
 import os

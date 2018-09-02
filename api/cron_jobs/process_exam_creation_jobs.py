@@ -1,5 +1,6 @@
 import hashlib
 from django.db.models import Q
+from django_cron import Schedule
 
 from ..cron_jobs import NonOverlappingCronJob
 from ..models import ExamCreationJob
@@ -13,6 +14,7 @@ class ProcessExamCreationJobsCronJob(NonOverlappingCronJob):
 
     RUN_EVERY_MINS = 1  # every minute
     CHUNK_SIZE = 1024 * 1024 * 1
+    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'api.ProcessExamCreationJobsCronJob'  # a unique code
 
     def md5(self, input_file):

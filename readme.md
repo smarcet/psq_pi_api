@@ -39,3 +39,13 @@ django-admin compilemessages
 # kill debug process
 
 sudo lsof -t -i tcp:8001 | xargs kill -9
+
+# dns
+
+https://www.hiroom2.com/2018/05/06/ubuntu-1804-bind-en/
+https://www.digitalocean.com/community/tutorials/how-to-configure-bind-as-a-private-network-dns-server-on-ubuntu-16-04
+https://www.digitalocean.com/community/tutorials/how-to-configure-bind-as-a-caching-or-forwarding-dns-server-on-ubuntu-14-04
+
+# services
+
+service --status-all
