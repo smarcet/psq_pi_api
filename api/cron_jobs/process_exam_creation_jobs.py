@@ -88,7 +88,7 @@ class ProcessExamCreationJobsCronJob(NonOverlappingCronJob):
                         response = session.put(endpoint, files=files, headers=headers, data=values)
 
                         if response.status_code != 200:
-                            logger.error("ProcessExamCreationJobsCronJob - response from api {status_code}".format(
+                            self.logger.error("ProcessExamCreationJobsCronJob - response from api {status_code}".format(
                                 status_code=response.status_code,
                             ))
 
@@ -111,7 +111,8 @@ class ProcessExamCreationJobsCronJob(NonOverlappingCronJob):
                     }
 
                     self.logger.info(
-                        "ProcessExamCreationJobsCronJob - doing final post for file {input_file} chunk {chunk_nbr} bytes_read {bytes_read}...".format(
+                        "ProcessExamCreationJobsCronJob - doing final post for file {input_file} chunk {chunk_nbr} "
+                        "bytes_read {bytes_read}...".format(
                             input_file=input_file,
                             bytes_read=bytes_read,
                             chunk_nbr=chunk_nbr
