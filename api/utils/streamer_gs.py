@@ -42,15 +42,17 @@ class StreamBroadcaster:
             Gst.init(None)
             if self.type == 'PI':
                 h264enc = 'omxh264enc'
-                h264opt = 'target-bitrate=100000 control-rate=3'
+                # https://support.video.ibm.com/hc/en-us/articles/207852117-Internet-connection-and-recommended-encoding-settings
+                # target bitrate is on bits per second this is 1500 kbps
+                h264opt = 'target-bitrate=12000000 control-rate=1'
             else:
                 h264enc = 'x264enc'
                 h264opt = 'tune=zerolatency bitrate=2200 threads=4 option-string=scenecut=0'
 
             str_pipeline = "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
                            "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
-                           "jpegdec ! {h264enc} {h264opt} ! " \
-                           "video/x-h264,profile=high ! " \
+                           "jpegdec ! videoscale ! video/x-raw,width=950,height=540 !{h264enc} {h264opt} ! " \
+                           "video/x-h264,profile=main ! " \
                            "h264parse ! flvmux ! " \
                            "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
                 stream_url=self.stream_url,

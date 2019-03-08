@@ -17,7 +17,8 @@ class ProcessExamCreationJobsCronJob(NonOverlappingCronJob):
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'api.ProcessExamCreationJobsCronJob'  # a unique code
 
-    def md5(self, input_file):
+    @staticmethod
+    def md5(input_file):
         hash_md5 = hashlib.md5()
         with open(input_file, "rb") as f:
             for chunk in iter(lambda: f.read(ProcessExamCreationJobsCronJob.CHUNK_SIZE), b""):
