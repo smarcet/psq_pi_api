@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import time
 import sys, signal, getopt, os
 import gi
 import logging
@@ -48,13 +48,13 @@ class StreamBroadcaster:
             else:
                 h264enc = 'x264enc'
                 h264opt = 'tune=zerolatency bitrate=2200 threads=4 option-string=scenecut=0'
-
+            timestamp = int(round(time.time() * 1000))
             str_pipeline = "souphttpsrc location={stream_url} do-timestamp=true ! multipartdemux ! " \
                            "image/jpeg, width={width}, height={height}, framerate={framerate} ! " \
                            "jpegdec ! videoscale ! video/x-raw,width=950,height=540 !{h264enc} {h264opt} ! " \
                            "video/x-h264,profile=main ! " \
                            "h264parse ! flvmux ! " \
-                           "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id} live=1'".format(
+                           "rtmpsink location='{rtmp_server}/live/{stream_key}?exercise_id={exercise_id}&user_id={user_id}&timestamp={timestamp} live=1'".format(
                 stream_url=self.stream_url,
                 h264enc=h264enc,
                 h264opt=h264opt,
@@ -64,7 +64,8 @@ class StreamBroadcaster:
                 height=720,
                 framerate="20/1",
                 exercise_id=self.exercise_id,
-                user_id=self.user_id
+                user_id=self.user_id,
+                timestamp=timestamp
             )
 
             self.pipeline = Gst.parse_launch(str_pipeline)
